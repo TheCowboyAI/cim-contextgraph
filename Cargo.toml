@@ -1,0 +1,28 @@
+[package]
+name = "cim-contextgraph"
+version = "0.1.0"
+edition = "2021"
+authors = ["The Cowboy AI"]
+description = "Fundamental graph abstractions for CIM - ContextGraph and ConceptGraph"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/thecowboyai/alchemist"
+keywords = ["graph", "context", "concept", "composition", "category-theory"]
+categories = ["data-structures", "algorithms", "visualization"]
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "2.0"
+uuid = { version = "1.11", features = ["v4", "serde"] }
+petgraph = "0.6"
+nalgebra = "0.33"  # For conceptual space geometry
+daggy = "0.8"      # For DAG operations
+cid = "0.11"       # For content-addressed identifiers
+
+[dev-dependencies]
+pretty_assertions = "1.4"
+proptest = "1.6"
+
+[[example]]
+name = "graph_composition"
+path = "examples/graph_composition.rs"
