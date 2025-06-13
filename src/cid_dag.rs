@@ -178,8 +178,8 @@ where
             while let Some(current) = to_visit.pop() {
                 if visited.insert(current) {
                     // Get parents of current node
-                    let parents: Vec<_> = self.dag.parents(current).walk(&self.dag).collect();
-                    for (_, parent_idx) in parents {
+                    let parent_walker = self.dag.parents(current);
+                    for parent_idx in parent_walker.iter(&self.dag).map(|(_, idx)| idx) {
                         to_visit.push(parent_idx);
                         if let Some(&parent_cid) = self.node_to_cid.get(&parent_idx) {
                             result.push(parent_cid);
@@ -204,8 +204,8 @@ where
             while let Some(current) = to_visit.pop() {
                 if visited.insert(current) {
                     // Get children of current node
-                    let children: Vec<_> = self.dag.children(current).walk(&self.dag).collect();
-                    for (_, child_idx) in children {
+                    let child_walker = self.dag.children(current);
+                    for child_idx in child_walker.iter(&self.dag).map(|(_, idx)| idx) {
                         to_visit.push(child_idx);
                         if let Some(&child_cid) = self.node_to_cid.get(&child_idx) {
                             result.push(child_cid);
@@ -224,8 +224,9 @@ where
         let mut current = *from;
 
         while let Some(node_idx) = self.cid_index.get(&current) {
-            let parents: Vec<_> = self.dag.parents(*node_idx)
-                .walk(&self.dag)
+            let parent_walker = self.dag.parents(*node_idx);
+            let parents: Vec<_> = parent_walker
+                .iter(&self.dag)
                 .filter_map(|(edge_idx, parent_idx)| {
                     // Only follow causal edges
                     let edge = self.dag.edge_weight(edge_idx)?;
