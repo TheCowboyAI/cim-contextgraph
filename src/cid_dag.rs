@@ -7,7 +7,7 @@
 //! - Used for both Event Store chains and Object Store references
 
 use crate::types::*;
-use daggy::{Dag, NodeIndex, EdgeIndex};
+use daggy::{Dag, NodeIndex, EdgeIndex, Walker};
 use cid::Cid;
 use std::collections::{HashMap, HashSet};
 use std::fmt::Debug;
@@ -178,7 +178,8 @@ where
             while let Some(current) = to_visit.pop() {
                 if visited.insert(current) {
                     // Get parents of current node
-                    for (_, parent_idx) in self.dag.parents(current).iter(&self.dag) {
+                    let parents: Vec<_> = self.dag.parents(current).walk(&self.dag).collect();
+                    for (_, parent_idx) in parents {
                         to_visit.push(parent_idx);
                         if let Some(&parent_cid) = self.node_to_cid.get(&parent_idx) {
                             result.push(parent_cid);
@@ -203,7 +204,8 @@ where
             while let Some(current) = to_visit.pop() {
                 if visited.insert(current) {
                     // Get children of current node
-                    for (_, child_idx) in self.dag.children(current).iter(&self.dag) {
+                    let children: Vec<_> = self.dag.children(current).walk(&self.dag).collect();
+                    for (_, child_idx) in children {
                         to_visit.push(child_idx);
                         if let Some(&child_cid) = self.node_to_cid.get(&child_idx) {
                             result.push(child_cid);
@@ -223,7 +225,7 @@ where
 
         while let Some(node_idx) = self.cid_index.get(&current) {
             let parents: Vec<_> = self.dag.parents(*node_idx)
-                .iter(&self.dag)
+                .walk(&self.dag)
                 .filter_map(|(edge_idx, parent_idx)| {
                     // Only follow causal edges
                     let edge = self.dag.edge_weight(edge_idx)?;
