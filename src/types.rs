@@ -188,10 +188,11 @@ impl fmt::Debug for ComponentStorage {
 }
 
 /// A node entry that contains the typed value and its components
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct NodeEntry<N> {
     pub id: NodeId,
     pub value: N,
+    #[serde(skip)]
     pub components: ComponentStorage,
 }
 
@@ -212,6 +213,11 @@ impl<N> NodeEntry<N> {
         }
     }
 
+    /// Add a component to this node
+    pub fn add_component<T: Component + 'static>(&mut self, component: T) -> Result<(), GraphError> {
+        self.components.add(component)
+    }
+
     /// Builder method to add a component
     pub fn with_component<T: Component + 'static>(mut self, component: T) -> Result<Self, GraphError> {
         self.components.add(component)?;
@@ -230,12 +236,13 @@ impl<N> NodeEntry<N> {
 }
 
 /// An edge entry that contains the typed value and its components
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EdgeEntry<E> {
     pub id: EdgeId,
     pub source: NodeId,
     pub target: NodeId,
     pub value: E,
+    #[serde(skip)]
     pub components: ComponentStorage,
 }
 
@@ -248,6 +255,11 @@ impl<E> EdgeEntry<E> {
             value,
             components: ComponentStorage::new(),
         }
+    }
+
+    /// Add a component to this edge
+    pub fn add_component<T: Component + 'static>(&mut self, component: T) -> Result<(), GraphError> {
+        self.components.add(component)
     }
 
     /// Builder method to add a component
@@ -304,14 +316,38 @@ impl Component for GraphReference {
 }
 
 /// Subgraph component (for nodes that contain entire graphs)
-#[derive(Debug, Clone)]
-pub struct Subgraph<N, E> {
+#[derive(Debug)]
+pub struct Subgraph<N, E>
+where
+    N: Clone,
+    E: Clone,
+{
     pub graph: Box<crate::context_graph::ContextGraph<N, E>>,
 }
 
-impl<N: 'static, E: 'static> Component for Subgraph<N, E> {
+impl<N, E> Clone for Subgraph<N, E>
+where
+    N: Clone,
+    E: Clone,
+{
+    fn clone(&self) -> Self {
+        Self {
+            graph: self.graph.clone()
+        }
+    }
+}
+
+impl<N, E> Component for Subgraph<N, E>
+where
+    N: 'static + Send + Sync + Clone,
+    E: 'static + Send + Sync + Clone,
+{
     fn as_any(&self) -> &dyn Any { self }
-    fn clone_box(&self) -> Box<dyn Component> { Box::new(self.clone()) }
+    fn clone_box(&self) -> Box<dyn Component> {
+        Box::new(Subgraph {
+            graph: self.graph.clone()
+        })
+    }
     fn type_name(&self) -> &'static str { "Subgraph" }
 }
 

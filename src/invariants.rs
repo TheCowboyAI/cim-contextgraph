@@ -1,13 +1,14 @@
 //! Graph invariants that can be enforced on ContextGraphs
 
 use crate::context_graph::{ContextGraph, GraphInvariant};
-use crate::types::{GraphResult, GraphError, Node, Edge};
+use crate::types::GraphResult;
 
 /// Invariant that ensures the graph is acyclic
+#[derive(Clone)]
 pub struct Acyclic;
 
-impl GraphInvariant<Node, Edge> for Acyclic {
-    fn check(&self, _graph: &ContextGraph<Node, Edge>) -> GraphResult<()> {
+impl<N, E> GraphInvariant<N, E> for Acyclic {
+    fn check(&self, _graph: &ContextGraph<N, E>) -> GraphResult<()> {
         // TODO: Implement cycle detection
         Ok(())
     }
@@ -15,18 +16,35 @@ impl GraphInvariant<Node, Edge> for Acyclic {
     fn name(&self) -> &str {
         "Acyclic"
     }
+
+    fn clone_box(&self) -> Box<dyn GraphInvariant<N, E>> {
+        Box::new(self.clone())
+    }
+
+    fn type_name(&self) -> &'static str {
+        "Acyclic"
+    }
 }
 
 /// Invariant that ensures the graph is connected
+#[derive(Clone)]
 pub struct Connected;
 
-impl GraphInvariant<Node, Edge> for Connected {
-    fn check(&self, _graph: &ContextGraph<Node, Edge>) -> GraphResult<()> {
+impl<N, E> GraphInvariant<N, E> for Connected {
+    fn check(&self, _graph: &ContextGraph<N, E>) -> GraphResult<()> {
         // TODO: Implement connectivity check
         Ok(())
     }
 
     fn name(&self) -> &str {
+        "Connected"
+    }
+
+    fn clone_box(&self) -> Box<dyn GraphInvariant<N, E>> {
+        Box::new(self.clone())
+    }
+
+    fn type_name(&self) -> &'static str {
         "Connected"
     }
 }

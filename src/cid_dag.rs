@@ -7,7 +7,7 @@
 //! - Used for both Event Store chains and Object Store references
 
 use crate::types::*;
-use daggy::{Dag, NodeIndex, EdgeIndex, Walker};
+use daggy::{Dag, NodeIndex, EdgeIndex};
 use cid::Cid;
 use std::collections::{HashMap, HashSet};
 use std::fmt::Debug;
@@ -169,16 +169,21 @@ where
     /// Get all ancestors of a CID (previous events in chain)
     pub fn ancestors(&self, cid: &Cid) -> Vec<Cid> {
         let mut result = Vec::new();
+        let mut visited = HashSet::new();
 
         if let Some(&node_idx) = self.cid_index.get(cid) {
-            // Use daggy's recursive walker
-            let parents = self.dag.recursive_walk(node_idx, |g, n| {
-                g.parents(n).iter(g).map(|(_, n)| n).collect::<Vec<_>>()
-            });
+            // Manually walk parents
+            let mut to_visit = vec![node_idx];
 
-            for parent_idx in parents {
-                if let Some(&parent_cid) = self.node_to_cid.get(&parent_idx) {
-                    result.push(parent_cid);
+            while let Some(current) = to_visit.pop() {
+                if visited.insert(current) {
+                    // Get parents of current node
+                    for (_, parent_idx) in self.dag.parents(current).iter(&self.dag) {
+                        to_visit.push(parent_idx);
+                        if let Some(&parent_cid) = self.node_to_cid.get(&parent_idx) {
+                            result.push(parent_cid);
+                        }
+                    }
                 }
             }
         }
@@ -189,15 +194,21 @@ where
     /// Get all descendants of a CID
     pub fn descendants(&self, cid: &Cid) -> Vec<Cid> {
         let mut result = Vec::new();
+        let mut visited = HashSet::new();
 
         if let Some(&node_idx) = self.cid_index.get(cid) {
-            let children = self.dag.recursive_walk(node_idx, |g, n| {
-                g.children(n).iter(g).map(|(_, n)| n).collect::<Vec<_>>()
-            });
+            // Manually walk children
+            let mut to_visit = vec![node_idx];
 
-            for child_idx in children {
-                if let Some(&child_cid) = self.node_to_cid.get(&child_idx) {
-                    result.push(child_cid);
+            while let Some(current) = to_visit.pop() {
+                if visited.insert(current) {
+                    // Get children of current node
+                    for (_, child_idx) in self.dag.children(current).iter(&self.dag) {
+                        to_visit.push(child_idx);
+                        if let Some(&child_cid) = self.node_to_cid.get(&child_idx) {
+                            result.push(child_cid);
+                        }
+                    }
                 }
             }
         }
@@ -267,9 +278,9 @@ where
             .find(|cid| ancestors1.contains(cid))
     }
 
-    /// Export as a ContextGraph for visualization
-    pub fn to_context_graph(&self) -> crate::context_graph_v2::ContextGraph<CidNode<T>, CidEdge> {
-        let mut graph = crate::context_graph_v2::ContextGraph::new("CID DAG");
+    /// Convert to a ContextGraph representation
+    pub fn to_context_graph(&self) -> crate::context_graph::ContextGraph<CidNode<T>, CidEdge> {
+        let mut graph = crate::context_graph::ContextGraph::new("CID DAG");
 
         // Map CIDs to NodeIds
         let mut cid_to_node_id = HashMap::new();
@@ -281,13 +292,13 @@ where
                 cid_to_node_id.insert(cid, node_id);
 
                 // Add CID as a component for easy lookup
-                graph.get_node_mut(node_id).unwrap()
+                let _ = graph.get_node_mut(node_id).unwrap()
                     .add_component(CidReference(*cid));
             }
         }
 
         // Add all edges
-        for edge_idx in self.dag.edge_indices() {
+        for edge_idx in self.dag.raw_edges().iter().enumerate().map(|(i, _)| EdgeIndex::new(i)) {
             if let Some((src_idx, dst_idx)) = self.dag.edge_endpoints(edge_idx) {
                 if let (Some(&src_cid), Some(&dst_cid)) =
                     (self.node_to_cid.get(&src_idx), self.node_to_cid.get(&dst_idx)) {
@@ -315,6 +326,14 @@ impl Component for CidReference {
     fn as_any(&self) -> &dyn std::any::Any {
         self
     }
+
+    fn clone_box(&self) -> Box<dyn Component> {
+        Box::new(self.clone())
+    }
+
+    fn type_name(&self) -> &'static str {
+        "CidReference"
+    }
 }
 
 /// Specialized CID DAG for Event Store
@@ -329,6 +348,9 @@ impl EventDag {
         event: EventNode,
         timestamp: u64,
     ) -> Result<(), GraphError> {
+        // Store payload_cid before moving event
+        let payload_cid = event.payload_cid;
+
         // Add the event node
         self.add_node(event_cid, event, timestamp)?;
 
@@ -338,7 +360,7 @@ impl EventDag {
         }
 
         // If event references an object, add reference edge
-        if let Some(payload_cid) = event.payload_cid {
+        if let Some(payload_cid) = payload_cid {
             // This assumes the object is already in the DAG
             // In practice, might need to handle missing objects
             self.add_reference(event_cid, payload_cid).ok();

@@ -14,21 +14,101 @@ use std::fmt::Debug;
 ///
 /// N: The node value type (can be any type, including primitives)
 /// E: The edge value type (can be any type, including primitives)
-#[derive(Debug, Clone)]
 pub struct ContextGraph<N, E> {
     pub id: ContextGraphId,
     pub nodes: HashMap<NodeId, NodeEntry<N>>,
     pub edges: HashMap<EdgeId, EdgeEntry<E>>,
     pub metadata: Metadata,
-
-    #[serde(skip)]
     pub invariants: Vec<Box<dyn GraphInvariant<N, E>>>,
+}
+
+impl<N, E> Debug for ContextGraph<N, E>
+where
+    N: Debug,
+    E: Debug,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ContextGraph")
+            .field("id", &self.id)
+            .field("nodes", &self.nodes)
+            .field("edges", &self.edges)
+            .field("metadata", &self.metadata)
+            .field("invariants_count", &self.invariants.len())
+            .finish()
+    }
+}
+
+// Manual Serialize implementation to handle trait bounds
+impl<N, E> Serialize for ContextGraph<N, E>
+where
+    N: Serialize,
+    E: Serialize,
+{
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        use serde::ser::SerializeStruct;
+        let mut state = serializer.serialize_struct("ContextGraph", 4)?;
+        state.serialize_field("id", &self.id)?;
+        state.serialize_field("nodes", &self.nodes)?;
+        state.serialize_field("edges", &self.edges)?;
+        state.serialize_field("metadata", &self.metadata)?;
+        state.end()
+    }
+}
+
+// Manual Deserialize implementation
+impl<'de, N, E> Deserialize<'de> for ContextGraph<N, E>
+where
+    N: Deserialize<'de>,
+    E: Deserialize<'de>,
+{
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        #[derive(Deserialize)]
+        struct ContextGraphData<N, E> {
+            id: ContextGraphId,
+            nodes: HashMap<NodeId, NodeEntry<N>>,
+            edges: HashMap<EdgeId, EdgeEntry<E>>,
+            metadata: Metadata,
+        }
+
+        let data = ContextGraphData::deserialize(deserializer)?;
+        Ok(ContextGraph {
+            id: data.id,
+            nodes: data.nodes,
+            edges: data.edges,
+            metadata: data.metadata,
+            invariants: Vec::new(),
+        })
+    }
+}
+
+impl<N, E> Clone for ContextGraph<N, E>
+where
+    N: Clone,
+    E: Clone,
+{
+    fn clone(&self) -> Self {
+        Self {
+            id: self.id,
+            nodes: self.nodes.clone(),
+            edges: self.edges.clone(),
+            metadata: self.metadata.clone(),
+            invariants: self.invariants.iter().map(|inv| inv.clone_box()).collect(),
+        }
+    }
 }
 
 /// Trait for graph invariants that must be maintained
 pub trait GraphInvariant<N, E>: Send + Sync {
     fn check(&self, graph: &ContextGraph<N, E>) -> GraphResult<()>;
     fn name(&self) -> &str;
+    fn clone_box(&self) -> Box<dyn GraphInvariant<N, E>>;
+    fn type_name(&self) -> &'static str;
 }
 
 impl<N, E> ContextGraph<N, E>
@@ -191,7 +271,11 @@ where
     }
 
     /// Get all nodes that contain subgraphs (for recursive traversal)
-    pub fn get_subgraph_nodes(&self) -> Vec<(&NodeId, &NodeEntry<N>)> {
+    pub fn get_subgraph_nodes(&self) -> Vec<(&NodeId, &NodeEntry<N>)>
+    where
+        N: Send + Sync + 'static,
+        E: Send + Sync + 'static,
+    {
         self.nodes
             .iter()
             .filter(|(_, node)| node.components.has::<Subgraph<N, E>>())
@@ -199,7 +283,11 @@ where
     }
 
     /// Count total nodes including nodes in subgraphs (recursive)
-    pub fn total_node_count(&self) -> usize {
+    pub fn total_node_count(&self) -> usize
+    where
+        N: Send + Sync + 'static,
+        E: Send + Sync + 'static,
+    {
         let mut count = self.nodes.len();
 
         for (_, node) in self.get_subgraph_nodes() {
