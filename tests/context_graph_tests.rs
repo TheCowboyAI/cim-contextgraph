@@ -24,8 +24,8 @@ fn test_primitive_graph_creation() {
     let edge3 = graph.add_edge(alice, charlie, 0.3).unwrap();
 
     // Verify structure
-    assert_eq!(graph.nodes.len(), 3);
-    assert_eq!(graph.edges.len(), 3);
+    assert_eq!(graph.node_count(), 3);
+    assert_eq!(graph.edge_count(), 3);
 
     // Access node values
     assert_eq!(graph.get_node_value(alice).unwrap(), "Alice");
@@ -89,6 +89,8 @@ enum CustomerTier {
 
 impl Component for CustomerInfo {
     fn as_any(&self) -> &dyn Any { self }
+    fn clone_box(&self) -> Box<dyn Component> { Box::new(self.clone()) }
+    fn type_name(&self) -> &'static str { "CustomerInfo" }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -100,6 +102,8 @@ struct PurchaseInfo {
 
 impl Component for PurchaseInfo {
     fn as_any(&self) -> &dyn Any { self }
+    fn clone_box(&self) -> Box<dyn Component> { Box::new(self.clone()) }
+    fn type_name(&self) -> &'static str { "PurchaseInfo" }
 }
 
 /// Test domain-specific graph with custom components
@@ -144,11 +148,11 @@ fn test_domain_graph_with_components() {
         .unwrap();
 
     // Query high-value customers
-    let gold_customers: Vec<_> = graph.nodes.iter()
+    let gold_customers: Vec<_> = graph.get_all_nodes()
         .filter_map(|(id, node)| {
             node.get_component::<CustomerInfo>()
                 .filter(|info| matches!(info.tier, CustomerTier::Gold))
-                .map(|_| *id)
+                .map(|_| id)
         })
         .collect();
 
@@ -276,8 +280,8 @@ fn test_type_flexibility() {
     mixed.add_edge(n1, n2, EdgeType::Numeric(3.14)).unwrap();
     mixed.add_edge(n2, n3, EdgeType::Labeled("connects to".to_string())).unwrap();
 
-    assert_eq!(mixed.nodes.len(), 3);
-    assert_eq!(mixed.edges.len(), 2);
+    assert_eq!(mixed.node_count(), 3);
+    assert_eq!(mixed.edge_count(), 2);
 }
 
 /// Test error handling and invariants
@@ -307,8 +311,8 @@ fn test_error_handling() {
 
     // Remove node and verify edges are cleaned up
     graph.remove_node(n2);
-    assert_eq!(graph.nodes.len(), 1);
-    assert_eq!(graph.edges.len(), 0); // Edge was removed with node
+    assert_eq!(graph.node_count(), 1);
+    assert_eq!(graph.edge_count(), 0); // Edge was removed with node
 }
 
 /// Demonstrate mermaid graph visualization
@@ -341,6 +345,6 @@ fn test_graph_visualization_structure() {
     graph.add_edge(customer2, product_b, "purchased".to_string()).unwrap();
 
     // This structure can be visualized using the mermaid diagram above
-    assert_eq!(graph.nodes.len(), 4);
-    assert_eq!(graph.edges.len(), 4);
+    assert_eq!(graph.node_count(), 4);
+    assert_eq!(graph.edge_count(), 4);
 }

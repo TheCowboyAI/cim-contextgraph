@@ -16,12 +16,11 @@ thiserror = "2.0"
 uuid = { version = "1.11", features = ["v4", "serde"] }
 petgraph = "0.6"
 nalgebra = "0.33"  # For conceptual space geometry
-daggy = "0.8"      # For DAG operations
-cid = { version = "0.11", features = ["serde"] }  # For content-addressed identifiers
 
 [dev-dependencies]
 pretty_assertions = "1.4"
 proptest = "1.6"
+rand = "0.9"
 
 [[example]]
 name = "graph_composition"

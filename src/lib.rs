@@ -39,12 +39,9 @@ pub mod context_graph;
 pub mod types;
 pub mod invariants;
 pub mod composition;
-pub mod cid_dag;
 
 // TODO: These modules will be implemented next
-// pub mod concept_graph;
 // pub mod morphisms;
-// pub mod visualization;
 
 // Re-export core types
 pub use context_graph::{ContextGraph, GraphInvariant};
@@ -57,4 +54,3 @@ pub use types::{
 };
 pub use invariants::{Acyclic, Connected};
 pub use composition::{compose, union, intersection, product};
-pub use cid_dag::{CidDag, EventDag, ObjectDag, CidNode, CidEdge, EventNode, ObjectNode};

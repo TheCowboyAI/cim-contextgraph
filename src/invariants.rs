@@ -21,9 +21,7 @@ impl<N, E> GraphInvariant<N, E> for Acyclic {
         Box::new(self.clone())
     }
 
-    fn type_name(&self) -> &'static str {
-        "Acyclic"
-    }
+
 }
 
 /// Invariant that ensures the graph is connected
@@ -44,7 +42,5 @@ impl<N, E> GraphInvariant<N, E> for Connected {
         Box::new(self.clone())
     }
 
-    fn type_name(&self) -> &'static str {
-        "Connected"
-    }
+
 }

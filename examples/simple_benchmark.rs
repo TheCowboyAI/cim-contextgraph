@@ -63,14 +63,11 @@ fn benchmark_contextgraph() -> std::time::Duration {
 
     println!("  - Added {} edges in {:.3}s", edge_count, edge_start.elapsed().as_secs_f64());
 
-    // Simple query: find neighbors using PetGraph
+    // Simple query: find components with labels
     let query_start = Instant::now();
-    if let Some(node_idx) = graph.node_id_map.get(&node_ids[0]) {
-        let neighbors: Vec<_> = graph.graph.neighbors(*node_idx).collect();
-        println!("  - Found {} neighbors of node 0 in {:.6}s",
-                 neighbors.len(),
-                 query_start.elapsed().as_secs_f64());
-    }
+    let labeled_nodes = graph.query_nodes_with_component::<Label>();
+    println!("  - Found {} nodes with labels in {:.6}s",
+             labeled_nodes.len(), query_start.elapsed().as_secs_f64());
 
     // Test some PetGraph algorithms
     let algo_start = Instant::now();

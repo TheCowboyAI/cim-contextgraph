@@ -5,7 +5,6 @@ use std::any::{Any, TypeId};
 use std::collections::HashMap;
 use std::fmt;
 use uuid::Uuid;
-use cid::Cid;
 
 /// Unique identifier for a ContextGraph
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -381,17 +380,8 @@ pub enum GraphError {
     #[error("Morphism error: {0}")]
     MorphismError(String),
 
-    #[error("CID {0} not found")]
-    CidNotFound(Cid),
-
-    #[error("Duplicate CID {0}")]
-    DuplicateCid(Cid),
-
-    #[error("Cycle detected in DAG")]
+    #[error("Cycle detected in graph")]
     CycleDetected,
-
-    #[error("Chain verification failed")]
-    ChainVerificationFailed,
 }
 
 /// Result type for graph operations

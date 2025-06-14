@@ -56,6 +56,12 @@ impl<N, E> GraphInvariant<N, E> for TrackingInvariant {
     fn name(&self) -> &str {
         "TrackingInvariant"
     }
+
+    fn clone_box(&self) -> Box<dyn GraphInvariant<N, E>> {
+        Box::new(TrackingInvariant {
+            calls: self.calls.clone(),
+        })
+    }
 }
 
 /// Test invariant that always fails
@@ -69,6 +75,10 @@ impl<N, E> GraphInvariant<N, E> for RejectingInvariant {
     fn name(&self) -> &str {
         "RejectingInvariant"
     }
+
+    fn clone_box(&self) -> Box<dyn GraphInvariant<N, E>> {
+        Box::new(RejectingInvariant)
+    }
 }
 
 #[test]
@@ -77,8 +87,8 @@ fn test_graph_creation() {
     let graph = ContextGraph::<String, i32>::new("TestGraph");
 
     // Check initial state
-    assert_eq!(graph.nodes().len(), 0);
-    assert_eq!(graph.edges().len(), 0);
+    assert_eq!(graph.node_count(), 0);
+    assert_eq!(graph.edge_count(), 0);
 
     // Check metadata
     assert_eq!(
@@ -97,7 +107,7 @@ fn test_node_operations() {
     let node3 = graph.add_node("Node3".to_string());
 
     // Check node count
-    assert_eq!(graph.nodes().len(), 3);
+    assert_eq!(graph.node_count(), 3);
 
     // Check node values
     assert_eq!(graph.get_node_value(node1).unwrap(), "Node1");
@@ -105,9 +115,10 @@ fn test_node_operations() {
     assert_eq!(graph.get_node_value(node3).unwrap(), "Node3");
 
     // Test node removal
-    let removed_value = graph.remove_node(node2);
-    assert_eq!(removed_value, Some("Node2".to_string()));
-    assert_eq!(graph.nodes().len(), 2);
+    let removed_node = graph.remove_node(node2);
+    assert!(removed_node.is_some());
+    assert_eq!(removed_node.unwrap().value, "Node2".to_string());
+    assert_eq!(graph.node_count(), 2);
     assert!(graph.get_node(node2).is_none());
 }
 
@@ -126,7 +137,7 @@ fn test_edge_operations() {
     let edge3 = graph.add_edge(a, c, 3).unwrap();
 
     // Check edge count
-    assert_eq!(graph.edges().len(), 3);
+    assert_eq!(graph.edge_count(), 3);
 
     // Check edge values
     assert_eq!(graph.get_edge_value(edge1).unwrap(), &1);
@@ -331,8 +342,8 @@ fn test_complex_scenario() {
     workflow.add_edge(ship, complete, "shipped".to_string()).unwrap();
 
     // Verify the workflow structure
-    assert_eq!(workflow.nodes().len(), 6);
-    assert_eq!(workflow.edges().len(), 6);
+    assert_eq!(workflow.node_count(), 6);
+    assert_eq!(workflow.edge_count(), 6);
 
     // Check it's a DAG (no cycles)
     assert!(!workflow.is_cyclic());
