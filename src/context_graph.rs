@@ -446,10 +446,10 @@ where
         // For now, returning a new empty graph
         // TODO: Implement proper MST when edge weights can be compared
 
-        let result = Self::new("MST");
+        
 
         // This would need proper implementation...
-        result
+        Self::new("MST")
     }
 
     /// Page rank algorithm
