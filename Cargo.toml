@@ -1,6 +1,6 @@
 [package]
 name = "cim-contextgraph"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 authors = ["The Cowboy AI"]
 description = "Fundamental graph abstractions for CIM - ContextGraph and ConceptGraph"
