@@ -279,7 +279,6 @@ impl<E> EdgeEntry<E> {
 }
 
 /// Common components that might be attached to nodes/edges
-
 /// Label component for naming
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Label(pub String);
