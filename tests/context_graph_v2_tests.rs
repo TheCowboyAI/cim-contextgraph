@@ -258,7 +258,7 @@ fn test_recursive_graph_traversal() {
     let mut total_nodes = 0;
     fs.visit_recursive(|graph, depth| {
         total_nodes += graph.graph.node_count();
-        println!("Level {}: {} nodes", depth, graph.graph.node_count());
+        println!("Level {depth}: {graph.graph.node_count(} nodes"));
     });
 
     assert_eq!(total_nodes, 6); // 3 in main + 3 in subgraph

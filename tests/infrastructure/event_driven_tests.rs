@@ -29,7 +29,7 @@ impl EventStreamValidator {
         
         let config = stream::Config {
             name: name.to_string(),
-            subjects: vec![format!("{}.>", name)],
+            subjects: vec![format!("{name}.>")],
             retention: stream::RetentionPolicy::WorkQueue,
             ..Default::default()
         };
@@ -84,14 +84,14 @@ mod layer_1_1_nats_connection {
     #[tokio::test]
     async fn test_graph_event_publishing() {
         let validator = EventStreamValidator::new().await.unwrap();
-        let stream_name = format!("test-graph-events-{}", &validator.correlation_id[0..8]);
+        let stream_name = format!("test-graph-events-{&validator.correlation_id[0..8]}");
         validator.create_test_stream(&stream_name).await.unwrap();
         
         // Publish context graph events
         let events = vec![
-            (format!("{}.node.added", stream_name), r#"{"node_id": "n1", "context": "test"}"#),
-            (format!("{}.edge.created", stream_name), r#"{"source": "n1", "target": "n2"}"#),
-            (format!("{}.context.updated", stream_name), r#"{"context_id": "ctx1", "changes": []}"#),
+            (format!("{stream_name}.node.added"), r#"{"node_id": "n1", "context": "test"}"#),
+            (format!("{stream_name}.edge.created"), r#"{"source": "n1", "target": "n2"}"#),
+            (format!("{stream_name}.context.updated"), r#"{"context_id": "ctx1", "changes": []}"#),
         ];
         
         for (subject, payload) in events {
@@ -253,15 +253,15 @@ mod layer_1_3_graph_operations {
     #[tokio::test]
     async fn test_distributed_graph_sync() {
         let validator = EventStreamValidator::new().await.unwrap();
-        let stream_name = format!("graph-sync-{}", &validator.correlation_id[0..8]);
+        let stream_name = format!("graph-sync-{&validator.correlation_id[0..8]}");
         validator.create_test_stream(&stream_name).await.unwrap();
         
         // Simulate graph operations from multiple sources
         let operations = vec![
-            (format!("{}.node.add", stream_name), r#"{"source": "client-1", "node_id": "n1"}"#),
-            (format!("{}.node.add", stream_name), r#"{"source": "client-2", "node_id": "n2"}"#),
-            (format!("{}.edge.add", stream_name), r#"{"source": "client-1", "from": "n1", "to": "n2"}"#),
-            (format!("{}.context.merge", stream_name), r#"{"source": "client-2", "contexts": ["ctx1", "ctx2"]}"#),
+            (format!("{stream_name}.node.add"), r#"{"source": "client-1", "node_id": "n1"}"#),
+            (format!("{stream_name}.node.add"), r#"{"source": "client-2", "node_id": "n2"}"#),
+            (format!("{stream_name}.edge.add"), r#"{"source": "client-1", "from": "n1", "to": "n2"}"#),
+            (format!("{stream_name}.context.merge"), r#"{"source": "client-2", "contexts": ["ctx1", "ctx2"]}"#),
         ];
         
         for (subject, payload) in operations {
@@ -276,7 +276,7 @@ mod layer_1_3_graph_operations {
     #[tokio::test]
     async fn test_graph_composition_events() {
         let validator = EventStreamValidator::new().await.unwrap();
-        let stream_name = format!("graph-composition-{}", &validator.correlation_id[0..8]);
+        let stream_name = format!("graph-composition-{&validator.correlation_id[0..8]}");
         validator.create_test_stream(&stream_name).await.unwrap();
         
         // Test graph composition operations
@@ -287,7 +287,7 @@ mod layer_1_3_graph_operations {
         ];
         
         for (i, event) in composition_events.iter().enumerate() {
-            let subject = format!("{}.operation.{}", stream_name, i);
+            let subject = format!("{stream_name}.operation.{i}");
             validator.publish_with_correlation(&subject, event.as_bytes()).await.unwrap();
         }
         
@@ -300,7 +300,7 @@ mod layer_1_3_graph_operations {
     #[tokio::test]
     async fn test_conceptual_space_mapping() {
         let validator = EventStreamValidator::new().await.unwrap();
-        let stream_name = format!("conceptual-mapping-{}", &validator.correlation_id[0..8]);
+        let stream_name = format!("conceptual-mapping-{&validator.correlation_id[0..8]}");
         validator.create_test_stream(&stream_name).await.unwrap();
         
         // Test conceptual space mapping events
@@ -316,7 +316,7 @@ mod layer_1_3_graph_operations {
         
         let payload = serde_json::to_vec(&mapping_event).unwrap();
         validator.publish_with_correlation(
-            &format!("{}.update", stream_name),
+            &format!("{stream_name}.update"),
             &payload
         ).await.unwrap();
         
@@ -329,15 +329,15 @@ mod layer_1_3_graph_operations {
     #[tokio::test]
     async fn test_graph_query_cache_invalidation() {
         let validator = EventStreamValidator::new().await.unwrap();
-        let stream_name = format!("graph-cache-{}", &validator.correlation_id[0..8]);
+        let stream_name = format!("graph-cache-{&validator.correlation_id[0..8]}");
         validator.create_test_stream(&stream_name).await.unwrap();
         
         // Test cache invalidation on graph mutations
         let mutation_events = vec![
-            (format!("{}.mutation.node_added", stream_name), r#"{"graph_id": "g1", "node_id": "n1"}"#),
-            (format!("{}.invalidate.query", stream_name), r#"{"graph_id": "g1", "query_types": ["neighbors", "paths"]}"#),
-            (format!("{}.mutation.edge_removed", stream_name), r#"{"graph_id": "g1", "edge_id": "e1"}"#),
-            (format!("{}.invalidate.all", stream_name), r#"{"graph_id": "g1", "reason": "structural_change"}"#),
+            (format!("{stream_name}.mutation.node_added"), r#"{"graph_id": "g1", "node_id": "n1"}"#),
+            (format!("{stream_name}.invalidate.query"), r#"{"graph_id": "g1", "query_types": ["neighbors", "paths"]}"#),
+            (format!("{stream_name}.mutation.edge_removed"), r#"{"graph_id": "g1", "edge_id": "e1"}"#),
+            (format!("{stream_name}.invalidate.all"), r#"{"graph_id": "g1", "reason": "structural_change"}"#),
         ];
         
         for (subject, payload) in mutation_events {

@@ -3,8 +3,8 @@
 //! These tests demonstrate how to use ContextGraph for various scenarios,
 //! from simple primitive graphs to complex domain models.
 
-use cim_contextgraph::{ContextGraph, NodeId, EdgeId, Label, Metadata, Subgraph, Component};
-use serde::{Serialize, Deserialize};
+use cim_contextgraph::{Component, ContextGraph, EdgeId, Label, Metadata, NodeId, Subgraph};
+use serde::{Deserialize, Serialize};
 use std::any::Any;
 
 /// Test basic graph creation with primitive types
@@ -43,11 +43,15 @@ fn test_component_system() {
     let edge = graph.add_edge(n1, n2, 50).unwrap();
 
     // Add components to nodes
-    graph.get_node_mut(n1).unwrap()
+    graph
+        .get_node_mut(n1)
+        .unwrap()
         .add_component(Label("Start Node".to_string()))
         .unwrap();
 
-    graph.get_node_mut(n2).unwrap()
+    graph
+        .get_node_mut(n2)
+        .unwrap()
         .add_component(Label("End Node".to_string()))
         .unwrap();
 
@@ -56,12 +60,16 @@ fn test_component_system() {
     metadata.description = Some("Connection between start and end".to_string());
     metadata.tags = vec!["important".to_string(), "primary".to_string()];
 
-    graph.get_edge_mut(edge).unwrap()
+    graph
+        .get_edge_mut(edge)
+        .unwrap()
         .add_component(metadata)
         .unwrap();
 
     // Query components
-    let label = graph.get_node(n1).unwrap()
+    let label = graph
+        .get_node(n1)
+        .unwrap()
         .get_component::<Label>()
         .unwrap();
     assert_eq!(label.0, "Start Node");
@@ -88,9 +96,15 @@ enum CustomerTier {
 }
 
 impl Component for CustomerInfo {
-    fn as_any(&self) -> &dyn Any { self }
-    fn clone_box(&self) -> Box<dyn Component> { Box::new(self.clone()) }
-    fn type_name(&self) -> &'static str { "CustomerInfo" }
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+    fn clone_box(&self) -> Box<dyn Component> {
+        Box::new(self.clone())
+    }
+    fn type_name(&self) -> &'static str {
+        "CustomerInfo"
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -101,9 +115,15 @@ struct PurchaseInfo {
 }
 
 impl Component for PurchaseInfo {
-    fn as_any(&self) -> &dyn Any { self }
-    fn clone_box(&self) -> Box<dyn Component> { Box::new(self.clone()) }
-    fn type_name(&self) -> &'static str { "PurchaseInfo" }
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+    fn clone_box(&self) -> Box<dyn Component> {
+        Box::new(self.clone())
+    }
+    fn type_name(&self) -> &'static str {
+        "PurchaseInfo"
+    }
 }
 
 /// Test domain-specific graph with custom components
@@ -121,7 +141,9 @@ fn test_domain_graph_with_components() {
     let product2 = graph.add_node("PROD-B".to_string());
 
     // Add customer info components
-    graph.get_node_mut(customer1).unwrap()
+    graph
+        .get_node_mut(customer1)
+        .unwrap()
         .add_component(CustomerInfo {
             customer_id: "CUST-001".to_string(),
             tier: CustomerTier::Gold,
@@ -129,7 +151,9 @@ fn test_domain_graph_with_components() {
         })
         .unwrap();
 
-    graph.get_node_mut(customer2).unwrap()
+    graph
+        .get_node_mut(customer2)
+        .unwrap()
         .add_component(CustomerInfo {
             customer_id: "CUST-002".to_string(),
             tier: CustomerTier::Silver,
@@ -138,8 +162,12 @@ fn test_domain_graph_with_components() {
         .unwrap();
 
     // Add purchase edges
-    let purchase1 = graph.add_edge(customer1, product1, "purchased".to_string()).unwrap();
-    graph.get_edge_mut(purchase1).unwrap()
+    let purchase1 = graph
+        .add_edge(customer1, product1, "purchased".to_string())
+        .unwrap();
+    graph
+        .get_edge_mut(purchase1)
+        .unwrap()
         .add_component(PurchaseInfo {
             order_id: "ORD-123".to_string(),
             amount: 299.99,
@@ -148,7 +176,8 @@ fn test_domain_graph_with_components() {
         .unwrap();
 
     // Query high-value customers
-    let gold_customers: Vec<_> = graph.get_all_nodes()
+    let gold_customers: Vec<_> = graph
+        .get_all_nodes()
         .filter_map(|(id, node)| {
             node.get_component::<CustomerInfo>()
                 .filter(|info| matches!(info.tier, CustomerTier::Gold))
@@ -175,13 +204,19 @@ fn test_recursive_graph_structure() {
     let frontend = eng_teams.add_node("Frontend Team".to_string());
     let devops = eng_teams.add_node("DevOps Team".to_string());
 
-    eng_teams.add_edge(backend, devops, "deploys to".to_string()).unwrap();
-    eng_teams.add_edge(frontend, devops, "deploys to".to_string()).unwrap();
+    eng_teams
+        .add_edge(backend, devops, "deploys to".to_string())
+        .unwrap();
+    eng_teams
+        .add_edge(frontend, devops, "deploys to".to_string())
+        .unwrap();
 
     // Attach sub-graph to engineering department
-    company.get_node_mut(engineering).unwrap()
+    company
+        .get_node_mut(engineering)
+        .unwrap()
         .add_component(Subgraph {
-            graph: Box::new(eng_teams)
+            graph: Box::new(eng_teams),
         })
         .unwrap();
 
@@ -190,17 +225,23 @@ fn test_recursive_graph_structure() {
     let enterprise = sales_teams.add_node("Enterprise Sales".to_string());
     let smb = sales_teams.add_node("SMB Sales".to_string());
 
-    sales_teams.add_edge(enterprise, smb, "mentors".to_string()).unwrap();
+    sales_teams
+        .add_edge(enterprise, smb, "mentors".to_string())
+        .unwrap();
 
     // Attach sub-graph to sales department
-    company.get_node_mut(sales).unwrap()
+    company
+        .get_node_mut(sales)
+        .unwrap()
         .add_component(Subgraph {
-            graph: Box::new(sales_teams)
+            graph: Box::new(sales_teams),
         })
         .unwrap();
 
     // Connect departments
-    company.add_edge(engineering, sales, "supports".to_string()).unwrap();
+    company
+        .add_edge(engineering, sales, "supports".to_string())
+        .unwrap();
 
     // Count total nodes including subgraphs
     let total_nodes = company.total_node_count();
@@ -233,7 +274,9 @@ fn test_graph_algorithms() {
 
     // Alternative path
     workflow.add_edge(validate, notify, "if invalid").unwrap();
-    workflow.add_edge(inventory, notify, "if unavailable").unwrap();
+    workflow
+        .add_edge(inventory, notify, "if unavailable")
+        .unwrap();
 
     // Find all paths from start to complete
     let paths = workflow.find_paths(start, complete);
@@ -278,7 +321,9 @@ fn test_type_flexibility() {
     let n3 = mixed.add_node(NodeType::Flag(true));
 
     mixed.add_edge(n1, n2, EdgeType::Numeric(3.14)).unwrap();
-    mixed.add_edge(n2, n3, EdgeType::Labeled("connects to".to_string())).unwrap();
+    mixed
+        .add_edge(n2, n3, EdgeType::Labeled("connects to".to_string()))
+        .unwrap();
 
     assert_eq!(mixed.node_count(), 3);
     assert_eq!(mixed.edge_count(), 2);
@@ -301,11 +346,15 @@ fn test_error_handling() {
     assert!(result.is_err());
 
     // Try to add duplicate component
-    graph.get_node_mut(n1).unwrap()
+    graph
+        .get_node_mut(n1)
+        .unwrap()
         .add_component(Label("First".to_string()))
         .unwrap();
 
-    let duplicate_result = graph.get_node_mut(n1).unwrap()
+    let duplicate_result = graph
+        .get_node_mut(n1)
+        .unwrap()
         .add_component(Label("Second".to_string()));
     assert!(duplicate_result.is_err());
 
@@ -334,15 +383,25 @@ fn test_graph_visualization_structure() {
     let product_b = graph.add_node("Product B".to_string());
 
     // Add visual components
-    graph.get_node_mut(customer1).unwrap()
+    graph
+        .get_node_mut(customer1)
+        .unwrap()
         .add_component(Label("VIP Customer".to_string()))
         .unwrap();
 
     // Create relationships
-    graph.add_edge(customer1, product_a, "purchased".to_string()).unwrap();
-    graph.add_edge(customer1, product_b, "purchased".to_string()).unwrap();
-    graph.add_edge(product_a, product_b, "related to".to_string()).unwrap();
-    graph.add_edge(customer2, product_b, "purchased".to_string()).unwrap();
+    graph
+        .add_edge(customer1, product_a, "purchased".to_string())
+        .unwrap();
+    graph
+        .add_edge(customer1, product_b, "purchased".to_string())
+        .unwrap();
+    graph
+        .add_edge(product_a, product_b, "related to".to_string())
+        .unwrap();
+    graph
+        .add_edge(customer2, product_b, "purchased".to_string())
+        .unwrap();
 
     // This structure can be visualized using the mermaid diagram above
     assert_eq!(graph.node_count(), 4);

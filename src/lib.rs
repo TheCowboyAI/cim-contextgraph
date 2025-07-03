@@ -35,22 +35,19 @@
 //!     .add_component(Label("Greeting".to_string()));
 //! ```
 
-pub mod context_graph;
-pub mod types;
-pub mod invariants;
 pub mod composition;
+pub mod context_graph;
+pub mod invariants;
+pub mod types;
 
 // TODO: These modules will be implemented next
 // pub mod morphisms;
 
 // Re-export core types
+pub use composition::{compose, intersection, product, union};
 pub use context_graph::{ContextGraph, GraphInvariant};
-pub use types::{
-    Component, ComponentStorage,
-    NodeEntry, EdgeEntry,
-    NodeId, EdgeId, ContextGraphId, ConceptGraphId,
-    Label, Metadata, GraphReference, Subgraph,
-    GraphError, GraphResult,
-};
 pub use invariants::{Acyclic, Connected};
-pub use composition::{compose, union, intersection, product};
+pub use types::{
+    Component, ComponentStorage, ConceptGraphId, ContextGraphId, EdgeEntry, EdgeId, GraphError,
+    GraphReference, GraphResult, Label, Metadata, NodeEntry, NodeId, Subgraph,
+};

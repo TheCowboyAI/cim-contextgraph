@@ -20,8 +20,6 @@ impl<N, E> GraphInvariant<N, E> for Acyclic {
     fn clone_box(&self) -> Box<dyn GraphInvariant<N, E>> {
         Box::new(self.clone())
     }
-
-
 }
 
 /// Invariant that ensures the graph is connected
@@ -41,6 +39,4 @@ impl<N, E> GraphInvariant<N, E> for Connected {
     fn clone_box(&self) -> Box<dyn GraphInvariant<N, E>> {
         Box::new(self.clone())
     }
-
-
 }

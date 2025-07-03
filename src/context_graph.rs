@@ -7,7 +7,7 @@
 //! - Recursive graph support
 
 use crate::types::*;
-use petgraph::graph::{Graph, NodeIndex, EdgeIndex};
+use petgraph::graph::{EdgeIndex, Graph, NodeIndex};
 use std::collections::HashMap;
 use std::fmt::Debug;
 
@@ -79,7 +79,9 @@ where
 {
     pub fn new(name: impl Into<String>) -> Self {
         let mut metadata = Metadata::default();
-        metadata.properties.insert("name".to_string(), serde_json::json!(name.into()));
+        metadata
+            .properties
+            .insert("name".to_string(), serde_json::json!(name.into()));
 
         Self {
             id: ContextGraphId::new(),
@@ -111,9 +113,13 @@ where
     /// Add an edge - wraps PetGraph's add_edge
     pub fn add_edge(&mut self, source: NodeId, target: NodeId, value: E) -> GraphResult<EdgeId> {
         // Get PetGraph indices
-        let source_idx = self.node_id_map.get(&source)
+        let source_idx = self
+            .node_id_map
+            .get(&source)
             .ok_or(GraphError::NodeNotFound(source))?;
-        let target_idx = self.node_id_map.get(&target)
+        let target_idx = self
+            .node_id_map
+            .get(&target)
             .ok_or(GraphError::NodeNotFound(target))?;
 
         let edge_entry = EdgeEntry::new(source, target, value);
@@ -134,13 +140,15 @@ where
 
     /// Get node by our ID
     pub fn get_node(&self, id: NodeId) -> Option<&NodeEntry<N>> {
-        self.node_id_map.get(&id)
+        self.node_id_map
+            .get(&id)
             .and_then(|idx| self.graph.node_weight(*idx))
     }
 
     /// Get mutable node by our ID
     pub fn get_node_mut(&mut self, id: NodeId) -> Option<&mut NodeEntry<N>> {
-        self.node_id_map.get(&id)
+        self.node_id_map
+            .get(&id)
             .and_then(|idx| self.graph.node_weight_mut(*idx))
     }
 
@@ -178,7 +186,8 @@ where
         // Convert to our IDs
         sccs.into_iter()
             .map(|component| {
-                component.into_iter()
+                component
+                    .into_iter()
                     .filter_map(|idx| self.node_index_map.get(&idx).copied())
                     .collect()
             })
@@ -190,11 +199,10 @@ where
         use petgraph::algo::toposort;
 
         match toposort(&self.graph, None) {
-            Ok(sorted) => {
-                Ok(sorted.into_iter()
-                    .filter_map(|idx| self.node_index_map.get(&idx).copied())
-                    .collect())
-            }
+            Ok(sorted) => Ok(sorted
+                .into_iter()
+                .filter_map(|idx| self.node_index_map.get(&idx).copied())
+                .collect()),
             Err(_) => Err(GraphError::CycleDetected),
         }
     }
@@ -203,7 +211,8 @@ where
 
     /// Query nodes by component type
     pub fn query_nodes_with_component<T: Component + 'static>(&self) -> Vec<NodeId> {
-        self.graph.node_indices()
+        self.graph
+            .node_indices()
             .filter_map(|idx| {
                 let node = &self.graph[idx];
                 if node.components.has::<T>() {
@@ -237,7 +246,13 @@ where
         visitor(self, 0);
 
         // Use DFS to find all nodes with subgraphs
-        let mut dfs = Dfs::new(&self.graph, self.graph.node_indices().next().unwrap_or(NodeIndex::new(0)));
+        let mut dfs = Dfs::new(
+            &self.graph,
+            self.graph
+                .node_indices()
+                .next()
+                .unwrap_or(NodeIndex::new(0)),
+        );
 
         while let Some(nx) = dfs.next(&self.graph) {
             if let Some(node) = self.graph.node_weight(nx) {
@@ -334,20 +349,23 @@ where
 
     /// Get the value of an edge
     pub fn get_edge_value(&self, edge_id: EdgeId) -> Option<&E> {
-        self.edge_id_map.get(&edge_id)
+        self.edge_id_map
+            .get(&edge_id)
             .and_then(|idx| self.graph.edge_weight(*idx))
             .map(|entry| &entry.value)
     }
 
     /// Get an edge by ID
     pub fn get_edge(&self, edge_id: EdgeId) -> Option<&EdgeEntry<E>> {
-        self.edge_id_map.get(&edge_id)
+        self.edge_id_map
+            .get(&edge_id)
             .and_then(|idx| self.graph.edge_weight(*idx))
     }
 
     /// Get a mutable edge by ID
     pub fn get_edge_mut(&mut self, edge_id: EdgeId) -> Option<&mut EdgeEntry<E>> {
-        self.edge_id_map.get(&edge_id)
+        self.edge_id_map
+            .get(&edge_id)
             .and_then(|idx| self.graph.edge_weight_mut(*idx))
     }
 
@@ -356,8 +374,13 @@ where
         use petgraph::Direction;
 
         if let Some(node_idx) = self.node_id_map.get(&node_id) {
-            self.graph.edges_directed(*node_idx, Direction::Incoming).count() +
-            self.graph.edges_directed(*node_idx, Direction::Outgoing).count()
+            self.graph
+                .edges_directed(*node_idx, Direction::Incoming)
+                .count()
+                + self
+                    .graph
+                    .edges_directed(*node_idx, Direction::Outgoing)
+                    .count()
         } else {
             0
         }
@@ -365,20 +388,20 @@ where
 
     /// Get all nodes as an iterator
     pub fn get_all_nodes(&self) -> impl Iterator<Item = (NodeId, &NodeEntry<N>)> {
-        self.graph.node_indices()
-            .filter_map(move |idx| {
-                self.node_index_map.get(&idx)
-                    .and_then(|id| self.graph.node_weight(idx).map(|node| (*id, node)))
-            })
+        self.graph.node_indices().filter_map(move |idx| {
+            self.node_index_map
+                .get(&idx)
+                .and_then(|id| self.graph.node_weight(idx).map(|node| (*id, node)))
+        })
     }
 
     /// Get all edges as an iterator
     pub fn get_all_edges(&self) -> impl Iterator<Item = (EdgeId, &EdgeEntry<E>)> {
-        self.graph.edge_indices()
-            .filter_map(move |idx| {
-                self.edge_index_map.get(&idx)
-                    .and_then(|id| self.graph.edge_weight(idx).map(|edge| (*id, edge)))
-            })
+        self.graph.edge_indices().filter_map(move |idx| {
+            self.edge_index_map
+                .get(&idx)
+                .and_then(|id| self.graph.edge_weight(idx).map(|edge| (*id, edge)))
+        })
     }
 
     /// Find all paths between two nodes (simple wrapper for find_paths)
@@ -414,7 +437,12 @@ where
     E: Clone + Debug,
 {
     /// Find all simple paths between two nodes
-    pub fn all_simple_paths(&self, start: NodeId, end: NodeId, max_length: usize) -> Vec<Vec<NodeId>> {
+    pub fn all_simple_paths(
+        &self,
+        start: NodeId,
+        end: NodeId,
+        max_length: usize,
+    ) -> Vec<Vec<NodeId>> {
         use petgraph::algo::all_simple_paths;
 
         let start_idx = match self.node_id_map.get(&start) {
@@ -427,11 +455,12 @@ where
             None => return vec![],
         };
 
-        let paths: Vec<Vec<NodeIndex>> = all_simple_paths(&self.graph, start_idx, end_idx, 0, Some(max_length))
-            .collect();
+        let paths: Vec<Vec<NodeIndex>> =
+            all_simple_paths(&self.graph, start_idx, end_idx, 0, Some(max_length)).collect();
 
         // Convert to our IDs
-        paths.into_iter()
+        paths
+            .into_iter()
             .map(|path| {
                 path.into_iter()
                     .filter_map(|idx| self.node_index_map.get(&idx).copied())
@@ -445,8 +474,6 @@ where
         // Note: This would require EdgeEntry<E> to implement PartialOrd
         // For now, returning a new empty graph
         // TODO: Implement proper MST when edge weights can be compared
-
-        
 
         // This would need proper implementation...
         Self::new("MST")
@@ -524,9 +551,13 @@ mod tests {
         let n3 = graph.add_node("Node3".to_string());
 
         // Add labels to some nodes
-        graph.get_node_mut(n1).unwrap()
+        graph
+            .get_node_mut(n1)
+            .unwrap()
             .add_component(Label("Important".to_string()));
-        graph.get_node_mut(n3).unwrap()
+        graph
+            .get_node_mut(n3)
+            .unwrap()
             .add_component(Label("Also Important".to_string()));
 
         // Query works with PetGraph backend

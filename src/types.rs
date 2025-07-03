@@ -125,7 +125,9 @@ impl ComponentStorage {
     pub fn add<T: Component + 'static>(&mut self, component: T) -> Result<(), GraphError> {
         let type_id = TypeId::of::<T>();
         if self.components.contains_key(&type_id) {
-            return Err(GraphError::ComponentAlreadyExists(component.type_name().to_string()));
+            return Err(GraphError::ComponentAlreadyExists(
+                component.type_name().to_string(),
+            ));
         }
         self.components.insert(type_id, Box::new(component));
         Ok(())
@@ -176,10 +178,7 @@ impl Clone for ComponentStorage {
 
 impl fmt::Debug for ComponentStorage {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let component_names: Vec<&str> = self.components
-            .values()
-            .map(|c| c.type_name())
-            .collect();
+        let component_names: Vec<&str> = self.components.values().map(|c| c.type_name()).collect();
         f.debug_struct("ComponentStorage")
             .field("components", &component_names)
             .finish()
@@ -213,12 +212,18 @@ impl<N> NodeEntry<N> {
     }
 
     /// Add a component to this node
-    pub fn add_component<T: Component + 'static>(&mut self, component: T) -> Result<(), GraphError> {
+    pub fn add_component<T: Component + 'static>(
+        &mut self,
+        component: T,
+    ) -> Result<(), GraphError> {
         self.components.add(component)
     }
 
     /// Builder method to add a component
-    pub fn with_component<T: Component + 'static>(mut self, component: T) -> Result<Self, GraphError> {
+    pub fn with_component<T: Component + 'static>(
+        mut self,
+        component: T,
+    ) -> Result<Self, GraphError> {
         self.components.add(component)?;
         Ok(self)
     }
@@ -257,12 +262,18 @@ impl<E> EdgeEntry<E> {
     }
 
     /// Add a component to this edge
-    pub fn add_component<T: Component + 'static>(&mut self, component: T) -> Result<(), GraphError> {
+    pub fn add_component<T: Component + 'static>(
+        &mut self,
+        component: T,
+    ) -> Result<(), GraphError> {
         self.components.add(component)
     }
 
     /// Builder method to add a component
-    pub fn with_component<T: Component + 'static>(mut self, component: T) -> Result<Self, GraphError> {
+    pub fn with_component<T: Component + 'static>(
+        mut self,
+        component: T,
+    ) -> Result<Self, GraphError> {
         self.components.add(component)?;
         Ok(self)
     }
@@ -284,9 +295,15 @@ impl<E> EdgeEntry<E> {
 pub struct Label(pub String);
 
 impl Component for Label {
-    fn as_any(&self) -> &dyn Any { self }
-    fn clone_box(&self) -> Box<dyn Component> { Box::new(self.clone()) }
-    fn type_name(&self) -> &'static str { "Label" }
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+    fn clone_box(&self) -> Box<dyn Component> {
+        Box::new(self.clone())
+    }
+    fn type_name(&self) -> &'static str {
+        "Label"
+    }
 }
 
 /// Metadata component
@@ -298,9 +315,15 @@ pub struct Metadata {
 }
 
 impl Component for Metadata {
-    fn as_any(&self) -> &dyn Any { self }
-    fn clone_box(&self) -> Box<dyn Component> { Box::new(self.clone()) }
-    fn type_name(&self) -> &'static str { "Metadata" }
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+    fn clone_box(&self) -> Box<dyn Component> {
+        Box::new(self.clone())
+    }
+    fn type_name(&self) -> &'static str {
+        "Metadata"
+    }
 }
 
 /// Graph reference component (for nodes that reference other graphs)
@@ -308,9 +331,15 @@ impl Component for Metadata {
 pub struct GraphReference(pub ContextGraphId);
 
 impl Component for GraphReference {
-    fn as_any(&self) -> &dyn Any { self }
-    fn clone_box(&self) -> Box<dyn Component> { Box::new(self.clone()) }
-    fn type_name(&self) -> &'static str { "GraphReference" }
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
+    fn clone_box(&self) -> Box<dyn Component> {
+        Box::new(self.clone())
+    }
+    fn type_name(&self) -> &'static str {
+        "GraphReference"
+    }
 }
 
 /// Subgraph component (for nodes that contain entire graphs)
@@ -330,7 +359,7 @@ where
 {
     fn clone(&self) -> Self {
         Self {
-            graph: self.graph.clone()
+            graph: self.graph.clone(),
         }
     }
 }
@@ -340,13 +369,17 @@ where
     N: 'static + Send + Sync + Clone,
     E: 'static + Send + Sync + Clone,
 {
-    fn as_any(&self) -> &dyn Any { self }
+    fn as_any(&self) -> &dyn Any {
+        self
+    }
     fn clone_box(&self) -> Box<dyn Component> {
         Box::new(Subgraph {
-            graph: self.graph.clone()
+            graph: self.graph.clone(),
         })
     }
-    fn type_name(&self) -> &'static str { "Subgraph" }
+    fn type_name(&self) -> &'static str {
+        "Subgraph"
+    }
 }
 
 /// Error types for graph operations

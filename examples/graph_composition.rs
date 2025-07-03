@@ -88,7 +88,7 @@ fn create_workflow_graph() -> ContextGraph<String, String> {
     workflow.add_edge(validate, notify, "if_invalid".to_string()).unwrap();
     workflow.add_edge(inventory, notify, "if_unavailable".to_string()).unwrap();
 
-    println!("Created workflow with {} steps", workflow.graph.node_count());
+    println!("Created workflow with {workflow.graph.node_count(} steps"));
 
     workflow
 }
@@ -125,7 +125,7 @@ fn create_knowledge_graph(workflow: ContextGraph<String, String>) -> ContextGrap
     knowledge.add_edge(orders, shipping, "uses".to_string()).unwrap();
     knowledge.add_edge(customers, orders, "inquires_about".to_string()).unwrap();
 
-    println!("Created knowledge graph with {} concepts", knowledge.graph.node_count());
+    println!("Created knowledge graph with {knowledge.graph.node_count(} concepts"));
 
     knowledge
 }
@@ -150,7 +150,7 @@ fn demonstrate_algorithms() {
     deps.add_edge(tests, api, "depends_on").unwrap();
 
     // Check for cycles
-    println!("Dependency graph is cyclic: {}", deps.is_cyclic());
+    println!("Dependency graph is cyclic: {deps.is_cyclic(}"));
 
     // Get build order using topological sort
     match deps.topological_sort() {
@@ -158,7 +158,7 @@ fn demonstrate_algorithms() {
             println!("Build order:");
             for (i, module_id) in order.iter().enumerate() {
                 if let Some(node) = deps.get_node(*module_id) {
-                    println!("  {}. {}", i + 1, node.value);
+                    println!("  {i + 1}. {node.value}");
                 }
             }
         }
@@ -167,11 +167,11 @@ fn demonstrate_algorithms() {
 
     // Find strongly connected components
     let sccs = deps.strongly_connected_components();
-    println!("Found {} independent components", sccs.len());
+    println!("Found {sccs.len(} independent components"));
 
     // Find paths between nodes
     let paths = deps.all_simple_paths(core, tests, 10);
-    println!("Found {} paths from 'core' to 'tests'", paths.len());
+    println!("Found {paths.len(} paths from 'core' to 'tests'"));
 }
 
 /// Demonstrate recursive graph structures
@@ -206,15 +206,13 @@ fn demonstrate_recursive_graphs() {
 
     // Count nodes recursively
     let subgraph_nodes = system.get_subgraph_nodes();
-    println!("System has {} nodes with subgraphs", subgraph_nodes.len());
+    println!("System has {subgraph_nodes.len(} nodes with subgraphs"));
 
     // Visit recursively
     println!("Recursive graph structure:");
     system.visit_recursive(|graph, depth| {
         let indent = "  ".repeat(depth);
-        println!("{}Graph: {} (nodes: {})",
-                 indent,
-                 graph.metadata.properties.get("name")
+        println!("{indent}Graph: {graph.metadata.properties.get("name"} (nodes: {})")
                      .and_then(|v| v.as_str())
                      .unwrap_or("unnamed"),
                  graph.graph.node_count());

@@ -24,9 +24,8 @@
 //! ```
 
 use cim_contextgraph::{
-    ContextGraph, NodeId, EdgeId, GraphResult, GraphError,
-    types::{Metadata, Label, Subgraph},
-    GraphInvariant,
+    types::{Label, Metadata, Subgraph},
+    ContextGraph, EdgeId, GraphError, GraphInvariant, GraphResult, NodeId,
 };
 use std::sync::{Arc, Mutex};
 
@@ -92,7 +91,13 @@ fn test_graph_creation() {
 
     // Check metadata
     assert_eq!(
-        graph.metadata.properties.get("name").unwrap().as_str().unwrap(),
+        graph
+            .metadata
+            .properties
+            .get("name")
+            .unwrap()
+            .as_str()
+            .unwrap(),
         "TestGraph"
     );
 }
@@ -158,15 +163,21 @@ fn test_component_system() {
     let n2 = graph.add_node("Node2".to_string());
 
     // Add label component to node1
-    graph.get_node_mut(n1).unwrap()
-        .add_component(Label("Important Node".to_string())).unwrap();
+    graph
+        .get_node_mut(n1)
+        .unwrap()
+        .add_component(Label("Important Node".to_string()))
+        .unwrap();
 
     // Add metadata component to node2
     let mut metadata = Metadata::default();
     metadata.description = Some("This is a test node".to_string());
     metadata.tags.push("test".to_string());
-    graph.get_node_mut(n2).unwrap()
-        .add_component(metadata).unwrap();
+    graph
+        .get_node_mut(n2)
+        .unwrap()
+        .add_component(metadata)
+        .unwrap();
 
     // Query nodes with Label component
     let labeled_nodes = graph.query_nodes_with_component::<Label>();
@@ -174,10 +185,18 @@ fn test_component_system() {
     assert!(labeled_nodes.contains(&n1));
 
     // Check component values
-    let label = graph.get_node(n1).unwrap().get_component::<Label>().unwrap();
+    let label = graph
+        .get_node(n1)
+        .unwrap()
+        .get_component::<Label>()
+        .unwrap();
     assert_eq!(label.0, "Important Node");
 
-    let meta = graph.get_node(n2).unwrap().get_component::<Metadata>().unwrap();
+    let meta = graph
+        .get_node(n2)
+        .unwrap()
+        .get_component::<Metadata>()
+        .unwrap();
     assert_eq!(meta.description.as_ref().unwrap(), "This is a test node");
 }
 
@@ -225,8 +244,8 @@ fn test_path_finding() {
     graph.add_edge(a, b, 1).unwrap();
     graph.add_edge(b, c, 1).unwrap();
     graph.add_edge(c, d, 1).unwrap();
-    graph.add_edge(a, c, 2).unwrap();  // Shortcut
-    graph.add_edge(b, d, 3).unwrap();  // Another path
+    graph.add_edge(a, c, 2).unwrap(); // Shortcut
+    graph.add_edge(b, d, 3).unwrap(); // Another path
 
     // Find all simple paths from A to D
     let paths = graph.all_simple_paths(a, d, 5);
@@ -277,10 +296,13 @@ fn test_subgraph_support() {
     let container_node = parent.add_node("Container".to_string());
 
     // Add subgraph as component
-    parent.get_node_mut(container_node).unwrap()
+    parent
+        .get_node_mut(container_node)
+        .unwrap()
         .add_component(Subgraph {
             graph: Box::new(subgraph),
-        }).unwrap();
+        })
+        .unwrap();
 
     // Query for nodes with subgraphs
     let subgraph_nodes = parent.get_subgraph_nodes();
@@ -324,22 +346,42 @@ fn test_complex_scenario() {
     let complete = workflow.add_node("Complete".to_string());
 
     // Add metadata to nodes
-    workflow.get_node_mut(validate).unwrap()
-        .add_component(Label("Validation Step".to_string())).unwrap();
+    workflow
+        .get_node_mut(validate)
+        .unwrap()
+        .add_component(Label("Validation Step".to_string()))
+        .unwrap();
 
     let mut payment_meta = Metadata::default();
     payment_meta.description = Some("Process customer payment".to_string());
-    payment_meta.properties.insert("timeout".to_string(), serde_json::json!(30));
-    workflow.get_node_mut(payment).unwrap()
-        .add_component(payment_meta).unwrap();
+    payment_meta
+        .properties
+        .insert("timeout".to_string(), serde_json::json!(30));
+    workflow
+        .get_node_mut(payment)
+        .unwrap()
+        .add_component(payment_meta)
+        .unwrap();
 
     // Connect workflow steps
-    workflow.add_edge(start, validate, "trigger".to_string()).unwrap();
-    workflow.add_edge(validate, payment, "if_valid".to_string()).unwrap();
-    workflow.add_edge(validate, inventory, "check_stock".to_string()).unwrap();
-    workflow.add_edge(payment, ship, "payment_success".to_string()).unwrap();
-    workflow.add_edge(inventory, ship, "in_stock".to_string()).unwrap();
-    workflow.add_edge(ship, complete, "shipped".to_string()).unwrap();
+    workflow
+        .add_edge(start, validate, "trigger".to_string())
+        .unwrap();
+    workflow
+        .add_edge(validate, payment, "if_valid".to_string())
+        .unwrap();
+    workflow
+        .add_edge(validate, inventory, "check_stock".to_string())
+        .unwrap();
+    workflow
+        .add_edge(payment, ship, "payment_success".to_string())
+        .unwrap();
+    workflow
+        .add_edge(inventory, ship, "in_stock".to_string())
+        .unwrap();
+    workflow
+        .add_edge(ship, complete, "shipped".to_string())
+        .unwrap();
 
     // Verify the workflow structure
     assert_eq!(workflow.node_count(), 6);

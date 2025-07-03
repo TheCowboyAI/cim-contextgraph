@@ -18,19 +18,19 @@ fn main() {
     println!("================");
     println!("ContextGraph Performance:");
     println!("  - Total time: {:.2}s", time.as_secs_f64());
-    println!("  - Nodes: {}", graph.graph.node_count());
-    println!("  - Edges: {}", graph.graph.edge_count());
+    println!("  - Nodes: {graph.graph.node_count(}"));
+    println!("  - Edges: {graph.graph.edge_count(}"));
 
     // Test some algorithms
     println!("\n\nTesting PetGraph Algorithms:");
     let algo_start = Instant::now();
 
-    println!("  - Is cyclic: {}", graph.is_cyclic());
-    println!("  - Strongly connected components: {}", graph.strongly_connected_components().len());
+    println!("  - Is cyclic: {graph.is_cyclic(}"));
+    println!("  - Strongly connected components: {graph.strongly_connected_components(}").len());
 
     // Try topological sort (will fail if cyclic)
     match graph.topological_sort() {
-        Ok(sorted) => println!("  - Topological sort succeeded: {} nodes", sorted.len()),
+        Ok(sorted) => println!("  - Topological sort succeeded: {sorted.len(} nodes")),
         Err(_) => println!("  - Topological sort failed (graph has cycles)"),
     }
 
@@ -46,13 +46,13 @@ fn benchmark_contextgraph() -> (ContextGraph<String, String>, std::time::Duratio
     let mut node_ids = Vec::with_capacity(10_000);
 
     for i in 0..10_000 {
-        let person_name = format!("Person_{}", i);
+        let person_name = format!("Person_{i}");
         let node_id = graph.add_node(person_name.clone());
 
         // Add a label component to some nodes
         if i % 100 == 0 {
             if let Some(node) = graph.get_node_mut(node_id) {
-                let _ = node.components.add(Label(format!("VIP_{}", i)));
+                let _ = node.components.add(Label(format!("VIP_{i}")));
             }
         }
 
@@ -71,7 +71,7 @@ fn benchmark_contextgraph() -> (ContextGraph<String, String>, std::time::Duratio
         let to_idx = rng.gen_range(0..10_000);
 
         if from_idx != to_idx {
-            let relationship = format!("knows_{}", edge_count);
+            let relationship = format!("knows_{edge_count}");
             if graph.add_edge(node_ids[from_idx], node_ids[to_idx], relationship).is_ok() {
                 edge_count += 1;
             }

@@ -226,9 +226,7 @@ impl NATSEventValidator {
 
     pub fn validate(&self) -> Result<(), String> {
         if self.captured_events.len() != self.expected_events.len() {
-            return Err(format!(
-                "Event count mismatch: expected {}, got {}",
-                self.expected_events.len(),
+            return Err(format!("Event count mismatch: expected {self.expected_events.len(}, got {}"),
                 self.captured_events.len()
             ));
         }
@@ -238,10 +236,7 @@ impl NATSEventValidator {
             .enumerate()
         {
             if expected != actual {
-                return Err(format!(
-                    "Event mismatch at position {}: expected {:?}, got {:?}",
-                    i, expected, actual
-                ));
+                return Err(format!("Event mismatch at position {i}: expected {:?}, got {:?}", expected, actual));
             }
         }
 
@@ -552,7 +547,7 @@ mod tests {
 
             let handle = tokio::spawn(async move {
                 let event = ContextGraphEvent {
-                    event_id: format!("concurrent-{}", i),
+                    event_id: format!("concurrent-{i}"),
                     graph_id: "test-graph".to_string(),
                     event_type: "Test".to_string(),
                     payload: serde_json::json!({ "index": i }),

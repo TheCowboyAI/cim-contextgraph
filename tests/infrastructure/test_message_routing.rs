@@ -134,7 +134,7 @@ impl CommandHandler for MockCommandHandler {
     fn handle(&self, _command: ContextGraphCommand) -> Result<String, String> {
         // Note: In a real implementation, this would be async
         // For testing, we'll skip the actual storage
-        Ok(format!("Handled by {}", self.id))
+        Ok(format!("Handled by {self.id}"))
     }
 
     fn handler_id(&self) -> String {
@@ -174,7 +174,7 @@ impl QueryHandler for MockQueryHandler {
 
         self.responses.get(query_type)
             .cloned()
-            .ok_or_else(|| format!("No response configured for {}", query_type))
+            .ok_or_else(|| format!("No response configured for {query_type}"))
     }
 
     fn handler_id(&self) -> String {
@@ -206,7 +206,7 @@ impl ContextGraphRouter {
         handler: Box<dyn CommandHandler>,
     ) -> Result<(), String> {
         if self.command_handlers.contains_key(command_type) {
-            return Err(format!("Handler already registered for {}", command_type));
+            return Err(format!("Handler already registered for {command_type}"));
         }
 
         self.command_handlers.insert(command_type.to_string(), handler);
@@ -219,7 +219,7 @@ impl ContextGraphRouter {
         handler: Box<dyn QueryHandler>,
     ) -> Result<(), String> {
         if self.query_handlers.contains_key(query_type) {
-            return Err(format!("Handler already registered for {}", query_type));
+            return Err(format!("Handler already registered for {query_type}"));
         }
 
         self.query_handlers.insert(query_type.to_string(), handler);
@@ -247,7 +247,7 @@ impl ContextGraphRouter {
         } else if let Some(fallback) = &self.fallback_handler {
             fallback.handle(command)
         } else {
-            Err(format!("No handler registered for command type: {}", command_type))
+            Err(format!("No handler registered for command type: {command_type}"))
         }
     }
 
@@ -263,7 +263,7 @@ impl ContextGraphRouter {
         if let Some(handler) = self.query_handlers.get(query_type) {
             handler.handle(query)
         } else {
-            Err(format!("No handler registered for query type: {}", query_type))
+            Err(format!("No handler registered for query type: {query_type}"))
         }
     }
 
@@ -297,9 +297,7 @@ impl RouterEventValidator {
 
     pub fn validate(&self) -> Result<(), String> {
         if self.captured_events.len() != self.expected_events.len() {
-            return Err(format!(
-                "Event count mismatch: expected {}, got {}",
-                self.expected_events.len(),
+            return Err(format!("Event count mismatch: expected {self.expected_events.len(}, got {}"),
                 self.captured_events.len()
             ));
         }
@@ -309,10 +307,7 @@ impl RouterEventValidator {
             .enumerate()
         {
             if expected != actual {
-                return Err(format!(
-                    "Event mismatch at position {}: expected {:?}, got {:?}",
-                    i, expected, actual
-                ));
+                return Err(format!("Event mismatch at position {i}: expected {:?}, got {:?}", expected, actual));
             }
         }
 
@@ -516,7 +511,7 @@ mod tests {
         // Act - Route multiple commands
         for i in 0..3 {
             router.route_command(ContextGraphCommand::CreateGraph {
-                graph_id: format!("graph-{}", i),
+                graph_id: format!("graph-{i}"),
                 name: "Test".to_string(),
                 context_type: "Test".to_string(),
             }).unwrap();
@@ -525,7 +520,7 @@ mod tests {
         for i in 0..2 {
             router.route_command(ContextGraphCommand::AddNode {
                 graph_id: "graph-1".to_string(),
-                node_id: format!("node-{}", i),
+                node_id: format!("node-{i}"),
                 node_type: "Concept".to_string(),
                 position: (0.0, 0.0, 0.0),
             }).unwrap();
